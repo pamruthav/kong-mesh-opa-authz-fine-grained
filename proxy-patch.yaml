@@ -1,0 +1,41 @@
+type: MeshProxyPatch
+mesh: default
+name: custom-proxy-patch-1
+spec:
+  targetRef:
+    kind: MeshService
+    name: ratings_employee_svc_80
+  default:
+    appendModifications:
+      - listener:
+          operation: Add
+          value: |
+            name: rego-listener
+            trafficDirection: OUTBOUND
+            address:
+              socketAddress:
+                address: 127.0.0.1
+                portValue: 4000
+            filterChains:
+            - filters:
+              - name: envoy.filters.network.http_connection_manager
+                typedConfig:
+                  '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                  httpFilters:
+                  - name: envoy.filters.http.router
+                    typedConfig:
+                      '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+                  routeConfig:
+                    name: outbound:directory_employee_svc_80
+                    validateClusters: false
+                    virtualHosts:
+                    - domains:
+                      - '*'
+                      name: directory_employee_svc_80
+                      routes:
+                      - match:
+                          prefix: /
+                        route:
+                          cluster: directory_employee_svc_80
+                          timeout: 15s
+                  statPrefix: "127_0_0_1_4000"

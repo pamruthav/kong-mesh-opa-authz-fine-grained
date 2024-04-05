@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "express": "^4.18.3"
+  },
+  "name": "medium-blogs",
+  "version": "1.0.0",
+  "main": "ratings.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

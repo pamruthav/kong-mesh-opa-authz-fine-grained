@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: employee
+  labels:
+    kuma.io/sidecar-injection: enabled
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratings
+  namespace: employee
+  labels:
+    app: ratings
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratings
+  template:
+    metadata:
+      labels:
+        app: ratings
+    spec:
+      containers:
+        - name: ratings
+          image: pamrutha88/employee-services:v3
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratings
+  namespace: employee
+  annotations:
+    80.service.kuma.io/protocol: "http"
+spec:
+  selector:
+    app: ratings
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

@@ -1,0 +1,53 @@
+type: MeshOPA
+mesh: default
+name: ratings-opa
+spec:
+  targetRef:
+    kind: MeshService
+    name: ratings_employee_svc_80
+  default:
+    agentConfig: # optional
+      inlineString: | # one of: inlineString, secret
+        decision_logs:
+          console: true
+    authConfig:
+      timeout: "10s"
+    appendPolicies:
+      - ignoreDecision: false
+        rego:
+          inlineString: |
+            package envoy.authz
+            import input.attributes.request.http as http_request
+            default allow = false
+
+            allow {
+               check_directory
+            }
+
+            action_allowed {
+              http_request.method == "HEAD"
+            }
+
+            jwt := {"valid": valid, "header": header, "payload": payload} {
+                token := substring(http_request.headers.authorization, count("Bearer "), -1)
+                jwks_request := http.send({
+                    "cache": true,
+                    "method": "GET",
+                    "url": "https://gist.githubusercontent.com/pamruthav/bfe63af16873283514934e980ea03e69/raw/856429a67b1907fa3d657664b7a2f3cd226a8a14/jwks"
+                })
+                jwks_request.status_code == 200
+                [valid, header, payload] := io.jwt.decode_verify(token, {
+                    "cert": jwks_request.raw_body
+                })
+            }
+
+            check_directory {
+                jwt.valid
+                requested_employee := split(http_request.path,"/")
+                dir_endpoint := sprintf("http://127.0.0.1:4000/employeeDirectory/%v", [requested_employee[2]])
+                dir_api_reqest := http.send({"method": "GET", "url": dir_endpoint, "tls_use_system_certs": true, "timeout": "30s"})
+                dir_api_reqest.status_code == 200
+                body := json.unmarshal(dir_api_reqest.raw_body)
+                body.employee_ids[_] == to_number(jwt.payload.sub)
+            }
+

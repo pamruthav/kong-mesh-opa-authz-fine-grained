@@ -1,0 +1,10 @@
+name: default
+type: Mesh
+mtls:
+  enabledBackend: ca-1
+  backends:
+  - name: ca-1
+    type: builtin
+networking:
+  outbound:
+    passthrough: true
