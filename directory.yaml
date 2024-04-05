@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: directory
+  namespace: employee
+  labels:
+    app: directory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: directory
+  template:
+    metadata:
+      labels:
+        app: directory
+    spec:
+      containers:
+        - name: directory
+          image: pamrutha88/employee-services:v3
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: directory
+  namespace: employee
+  annotations:
+    80.service.kuma.io/protocol: "http"
+spec:
+  selector:
+    app: directory
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
